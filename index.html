@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Propietarios - BARRIO EUSKADI I</title>
+    <!-- Tailwind CSS para diseño moderno y responsive -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js para los gráficos interactivos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Lucide Icons para una interfaz limpia -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- PapaParse para procesar el CSV de Google Sheets de forma robusta -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        
+        /* Estilos de optimización absoluta para Impresión y Reportes PDF Selectivos */
+        @media print {
+            body { background-color: #ffffff; color: #000000; font-size: 11px; }
+            header, .no-print, #statusConnection, button, .mes-corriente-container, .tabs-selector-container { 
+                display: none !important; 
+            }
+            main { max-width: 100% !important; width: 100% !important; padding: 0 !important; margin: 0 !important; }
+            .section-metrics { display: block !important; margin-bottom: 20px !important; }
+            .metrics-grid { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 16px !important; }
+            section { border: 1px solid #cbd5e1 !important; box-shadow: none !important; page-break-inside: avoid; }
+            .tabla-container { display: block !important; width: 100% !important; margin-top: 20px !important; }
+            table { width: 100% !important; border-collapse: collapse !important; }
+            th, td { padding: 6px 8px !important; border-bottom: 1px solid #e2e8f0 !important; }
+            .tfoot-totales { background-color: #f8fafc !important; border-top: 2px solid #94a3b8 !important; }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen">
+
+    <!-- ENTORNO PRINCIPAL DEL DASHBOARD (ACCESO DIRECTO) -->
+    <div id="entornoDashboard">
+        <!-- Navbar / Encabezado -->
+        <header class="bg-slate-950 text-white shadow-md sticky top-0 z-40">
+            <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight uppercase">BARRIO EUSKADI I - POCITO</h1>
+                    <p class="text-xs text-slate-400">Panel de Consulta de Expensas para Propietarios</p>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                    <button onclick="window.print()" class="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold px-4 py-2 rounded-lg border border-slate-700 transition shadow-sm cursor-pointer">
+                        <i data-lucide="printer" class="w-4 h-4 text-emerald-400"></i> Imprimir Reporte / PDF
+                    </button>
+                    <div id="statusConnection" class="flex items-center gap-2 text-sm bg-slate-900 px-3 py-1.5 rounded-full text-slate-300">
+                        <span class="w-2.5 h-2.5 bg-amber-500 rounded-full animate-pulse" id="statusDot"></span>
+                        <span id="statusText">Conectando...</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="max-w-7xl mx-auto px-4 py-6 space-y-6">
+
+            <!-- Gestión del Mes Corriente -->
+            <div class="mes-corriente-container">
+                <div class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1">
+                    <i data-lucide="calendar" class="w-3.5 h-3.5 text-slate-400"></i> 
+                    Consolidado del Mes Vigente: <span id="lblMesCorriente" class="text-slate-600 normal-case ml-1 font-semibold">-</span>
+                </div>
+                <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between border-l-4 border-l-emerald-500">
+                        <div class="space-y-1">
+                            <p class="text-xs font-medium text-slate-400">Cobros Mes Corriente</p>
+                            <h3 class="text-xl font-bold text-emerald-600" id="kpiCobrosMes">$0,00</h3>
+                        </div>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between border-l-4 border-l-rose-500">
+                        <div class="space-y-1">
+                            <p class="text-xs font-medium text-slate-400">Deuda Mes Corriente</p>
+                            <h3 class="text-xl font-bold text-rose-600" id="kpiDeudaMes">$0,00</h3>
+                        </div>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between border-l-4 border-l-amber-500">
+                        <div class="space-y-1">
+                            <p class="text-xs font-medium text-slate-400">Lotes en Mora</p>
+                            <h3 class="text-xl font-bold text-slate-900" id="kpiMoraMes">0</h3>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex flex-col justify-between items-center min-h-[110px]">
+                        <div class="w-full text-center">
+                            <p class="text-xs font-medium text-slate-400 mb-1">Efectividad Cobro</p>
+                        </div>
+                        <div class="w-full h-14 relative flex items-center justify-center -mt-2">
+                            <canvas id="chartGaugeMes"></canvas>
+                            <div class="absolute bottom-0 text-center">
+                                <span class="text-lg font-bold text-slate-900" id="lblGaugePorcentaje">0%</span>
+                            </div>
+                        </div>
+                        <div class="w-full text-center text-[10px] text-slate-500 font-medium pt-1 border-t border-slate-50">
+                            <span class="text-emerald-600" id="lblGaugePagados">Pagos: 0</span> — 
+                            <span class="text-rose-600" id="lblGaugePendientes">Pendientes: 0</span>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- SECCIÓN DE REPORTES POR PESTAÑAS -->
+            <section class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden tabla-container">
+                <div class="bg-slate-100 p-2 border-b border-slate-200 flex gap-2 tabs-selector-container no-print">
+                    <button id="btnTabBaseDatos" onclick="cambiarPestana('BASEDATOS')" class="bg-white text-slate-900 font-bold text-xs px-4 py-2 rounded-lg shadow-xs cursor-pointer flex items-center gap-1">
+                        <i data-lucide="database" class="w-3.5 h-3.5"></i> Vista Detallada
+                    </button>
+                    <button id="btnTabResumenSaldos" onclick="cambiarPestana('RESUMEN')" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold text-xs px-4 py-2 rounded-lg cursor-pointer flex items-center gap-1">
+                        <i data-lucide="file-text" class="w-3.5 h-3.5 text-emerald-600"></i> Resumen de Saldos por Lote
+                    </button>
+                </div>
+
+                <!-- CONTENEDOR 1: TABLA DETALLADA -->
+                <div id="contenedorPestanaBaseDatos" class="w-full">
+                    <div class="p-5 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                        <div>
+                            <h3 class="font-bold text-base text-slate-900">Registros Detallados de la Base de Datos</h3>
+                            <p class="text-xs text-slate-500 font-medium">Fecha de cálculo: <span class="lblFechaCalculoDinamica font-bold text-slate-900">-</span></p>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto w-full">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 text-slate-600 text-xs font-semibold uppercase border-b border-gray-100">
+                                    <th class="p-4">Lote</th>
+                                    <th class="p-4">Propietario</th>
+                                    <th class="p-4">Período</th>
+                                    <th class="p-4">Tipo</th>
+                                    <th class="p-4 text-right">Monto Base</th>
+                                    <th class="p-4 text-right">Recargo</th>
+                                    <th class="p-4 text-right">Total</th>
+                                    <th class="p-4 text-center">Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablaCuerpo" class="divide-y divide-slate-100 text-sm"></tbody>
+                            <tfoot class="bg-slate-50 text-slate-900 font-bold border-t-2 border-slate-300 text-sm tfoot-totales">
+                                <tr>
+                                    <td colspan="4" class="p-4 text-left text-xs text-slate-500 font-bold uppercase">Total Pendiente Detallado:</td>
+                                    <td class="p-4 text-right text-slate-700" id="totalTabSubtotal">$0,00</td>
+                                    <td class="p-4 text-right text-amber-700" id="totalTabRecargo">$0,00</td>
+                                    <td class="p-4 text-right text-slate-900 text-base" id="totalTabTotal">$0,00</td>
+                                    <td class="p-4 text-center text-xs"><span class="bg-rose-100 text-rose-800 px-2 py-1 rounded font-bold shadow-sm">MORA DETALLE</span></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- CONTENEDOR 2: VISTA RESUMEN COMPACTO LOTE POR LOTE -->
+                <div id="contenedorPestanaResumen" class="w-full hidden">
+                    <div class="p-5 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                        <div>
+                            <h3 class="font-bold text-base text-slate-900">Resumen Consolidado de Deuda por Lote</h3>
+                            <p class="text-xs text-slate-500 font-medium">Fecha de cálculo: <span class="lblFechaCalculoDinamica font-bold text-slate-900">-</span></p>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto w-full">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 text-slate-600 text-xs font-semibold uppercase border-b border-gray-100">
+                                    <th class="p-4">Lote Número</th>
+                                    <th class="p-4">Propietario/s</th>
+                                    <th class="p-4 text-right">Importe Adeudado</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablaResumenCuerpo" class="divide-y divide-slate-100 text-sm"></tbody>
+                            <tfoot class="bg-slate-50 text-slate-900 font-bold border-t-2 border-slate-300 text-sm tfoot-totales">
+                                <tr>
+                                    <td colspan="2" class="p-4 text-left text-xs text-slate-500 font-bold uppercase">Total de Deuda Consolidada Consorcio:</td>
+                                    <td class="p-4 text-right text-slate-900 text-base" id="totalResumenTotal">$0,00</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Lógica de Consulta Automatizada -->
+    <script>
+        const SHEETS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTeRTnTG2O69xGBaDShVvATBv8s9I6w0N2O0Zd1A7RPxMcM8I5w2kksmcMTtMO742WTbJjY28jsp28p/pub?gid=0&single=true&output=csv";
+
+        let baseDeDatosOriginal = [];
+        let periodoVigenteGlobal = "";
+        let fechaYHoraCalculoGlobal = ""; 
+        let chartGaugeInstance = null;
+        let pestanaActiva = "BASEDATOS";
+
+        const mapaLotesEquivalentes = {
+            "01": "I", "02": "II", "03": "III", "04": "IV", "05": "V",
+            "06": "VI", "07": "VII", "08": "VIII", "09": "IX", "10": "X",
+            "11": "XI", "12": "XII", "13": "XIII", "14": "XIV", "15": "XV",
+            "16": "XVI", "17": "XVII", "18": "XVIII", "19": "XIX", "20": "XX"
+        };
+
+        const formatMoneda = (val) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(val);
+
+        function limpiarNumero(valor) {
+            if (!valor) return 0;
+            let str = valor.toString().replace(/[^0-9,\-]/g, '').replace(',', '.');
+            let num = parseFloat(str);
+            return isNaN(num) ? 0 : num;
+        }
+
+        function cambiarPestana(pestana) {
+            pestanaActiva = pestana;
+            const tabBD = document.getElementById('btnTabBaseDatos');
+            const tabResumen = document.getElementById('btnTabResumenSaldos');
+            const contenedorBD = document.getElementById('contenedorPestanaBaseDatos');
+            const contenedorResumen = document.getElementById('contenedorPestanaResumen');
+
+            if (pestana === "BASEDATOS") {
+                tabBD.className = "bg-white text-slate-900 font-bold text-xs px-4 py-2 rounded-lg shadow-xs cursor-pointer flex items-center gap-1";
+                tabResumen.className = "bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold text-xs px-4 py-2 rounded-lg cursor-pointer flex items-center gap-1";
+                contenedorBD.classList.remove('hidden');
+                contenedorResumen.classList.add('hidden');
+            } else {
+                tabResumen.className = "bg-white text-slate-900 font-bold text-xs px-4 py-2 rounded-lg shadow-xs cursor-pointer flex items-center gap-1";
+                tabBD.className = "bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold text-xs px-4 py-2 rounded-lg cursor-pointer flex items-center gap-1";
+                contenedorResumen.classList.remove('hidden');
+                contenedorBD.classList.add('hidden');
+            }
+        }
+
+        async function conectarYFetchData() {
+            document.getElementById('statusDot').className = "w-2.5 h-2.5 bg-amber-500 rounded-full animate-pulse";
+            document.getElementById('statusText').innerText = "Conectando...";
+            
+            try {
+                const response = await fetch(SHEETS_CSV_URL);
+                if (!response.ok) throw new Error("No se pudo conectar al endpoint.");
+                const csvTexto = await response.text();
+                
+                Papa.parse(csvTexto, {
+                    header: true, skipEmptyLines: true,
+                    complete: function(results) { 
+                        mapearYProcesarDatos(results.data);
+                        procesarDashboard(baseDeDatosOriginal);
+                    },
+                    error: function() { mostrarError("Error al interpretar la estructura."); }
+                });
+            } catch (error) {
+                console.error(error);
+                mostrarError("Error de conexión con Google Sheets.");
+            }
+        }
+
+        function mapearYProcesarDatos(filas) {
+            baseDeDatosOriginal = filas.map(fila => {
+                const getVal = (keys) => {
+                    const foundKey = Object.keys(fila).find(k => keys.includes(k.trim().toUpperCase()));
+                    return foundKey ? fila[foundKey] : '';
+                };
+
+                return {
+                    idLote: (getVal(['IDLOTE', 'LOTE', 'ID_LOTE'])).trim().toUpperCase(),
+                    propietario: getVal(['PROPIETARIO', 'NOMBRE', 'TITULAR']) || 'SIN PROPIETARIO',
+                    mes: (getVal(['MES', 'PERIODO', 'PERÍODO']) || 'S/D').trim().toLowerCase(),
+                    tipo: (getVal(['TIPO', 'CONCEPTO']) || 'EXPENSAS MES').trim().toUpperCase(),
+                    subtotal: limpiarNumero(getVal(['SUBTOTAL', 'MONTOEXPENSAS', 'MONTO_BASE'])),
+                    recargo: limpiarNumero(getVal(['RECARGO', 'TASARECARGO', 'INTERESES'])),
+                    total: limpiarNumero(getVal(['TOTAL', 'MONTO_TOTAL'])),
+                    estado: (getVal(['ESTADO', 'CONDICION']) || 'PENDIENTE').trim().toUpperCase()
+                };
+            }).filter(item => item.idLote !== '');
+
+            const todosLosMeses = [...new Set(baseDeDatosOriginal.map(d => d.mes))].filter(m => m !== 's/d');
+            periodoVigenteGlobal = todosLosMeses[todosLosMeses.length - 1] || "S/D";
+
+            document.getElementById('lblMesCorriente').innerText = periodoVigenteGlobal;
+
+            const ahora = new Date();
+            fechaYHoraCalculoGlobal = ahora.toLocaleDateString('es-AR') + ' a las ' + ahora.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+            
+            const etiquetasFecha = document.getElementsByClassName('lblFechaCalculoDinamica');
+            for(let i = 0; i < etiquetasFecha.length; i++){
+                etiquetasFecha[i].innerText = fechaYHoraCalculoGlobal;
+            }
+
+            document.getElementById('statusDot').className = "w-2.5 h-2.5 bg-emerald-500 rounded-full";
+            document.getElementById('statusText').innerText = "Sincronizado";
+        }
+
+        function procesarDashboard(datosAMostrar) {
+            let cobrosMesCorriente = 0;
+            let deudaMesCorriente = 0;
+            let lotesEnMoraMesCorriente = new Set();
+            let cantPagadosGauge = 0;
+            let cantPendientesGauge = 0;
+
+            baseDeDatosOriginal.forEach(item => {
+                if (item.mes === periodoVigenteGlobal) {
+                    const finalTotal = item.total > 0 ? item.total : (item.subtotal + item.recargo);
+                    if (item.estado === 'PAGADO' || item.estado === 'COBRADO') {
+                        cobrosMesCorriente += finalTotal;
+                        cantPagadosGauge++;
+                    } else {
+                        deudaMesCorriente += finalTotal;
+                        lotesEnMoraMesCorriente.add(item.idLote);
+                        cantPendientesGauge++;
+                    }
+                }
+            });
+
+            const totalFacturadoMes = cobrosMesCorriente + deudaMesCorriente;
+            const porcentajeEfectividadMes = totalFacturadoMes > 0 ? ((cobrosMesCorriente / totalFacturadoMes) * 100).toFixed(1) : 0;
+
+            document.getElementById('kpiCobrosMes').innerText = formatMoneda(cobrosMesCorriente);
+            document.getElementById('kpiDeudaMes').innerText = formatMoneda(deudaMesCorriente);
+            document.getElementById('kpiMoraMes').innerText = lotesEnMoraMesCorriente.size;
+
+            document.getElementById('lblGaugePorcentaje').innerText = `${porcentajeEfectividadMes}%`;
+            document.getElementById('lblGaugePagados').innerText = `Pagos: ${cantPagadosGauge}`;
+            document.getElementById('lblGaugePendientes').innerText = `Pendientes: ${cantPendientesGauge}`;
+
+            // RENDERIZAR DETALLE (TABLA 1)
+            const tbody = document.getElementById('tablaCuerpo');
+            tbody.innerHTML = '';
+            
+            let acumSubtotalPendiente = 0;
+            let acumRecargoPendiente = 0;
+            let acumTotalPendiente = 0;
+
+            if(datosAMostrar.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-slate-400 font-medium">No se encontraron registros activos</td></tr>`;
+            } else {
+                datosAMostrar.forEach(item => {
+                    const finalTotal = item.total > 0 ? item.total : (item.subtotal + item.recargo);
+                    const isPagado = item.estado === 'PAGADO' || item.estado === 'COBRADO';
+                    
+                    if (!isPagado) {
+                        acumSubtotalPendiente += item.subtotal;
+                        acumRecargoPendiente += item.recargo;
+                        acumTotalPendiente += finalTotal;
+                    }
+
+                    const tr = document.createElement('tr');
+                    tr.className = "hover:bg-slate-50 transition-colors";
+                    tr.innerHTML = `
+                        <td class="p-4 font-semibold text-slate-700">Lote ${item.idLote}</td>
+                        <td class="p-4 font-medium text-slate-950">${item.propietario}</td>
+                        <td class="p-4 text-slate-500 capitalize">${item.mes}</td>
+                        <td class="p-4 text-xs font-semibold"><span class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded">${item.tipo}</span></td>
+                        <td class="p-4 text-right text-slate-600">${formatMoneda(item.subtotal)}</td>
+                        <td class="p-4 text-right text-amber-600">${formatMoneda(item.recargo)}</td>
+                        <td class="p-4 text-right font-semibold text-slate-900">${formatMoneda(finalTotal)}</td>
+                        <td class="p-4 text-center">
+                            <span class="px-2.5 py-1 rounded-full text-xs font-bold tracking-wide ${isPagado ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">
+                                ${item.estado}
+                            </span>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+
+            document.getElementById('totalTabSubtotal').innerText = formatMoneda(acumSubtotalPendiente);
+            document.getElementById('totalTabRecargo').innerText = formatMoneda(acumRecargoPendiente);
+            document.getElementById('totalTabTotal').innerText = formatMoneda(acumTotalPendiente);
+
+            // RENDERIZAR RESUMEN COMPACTO (TABLA 2)
+            const tbodyResumen = document.getElementById('tablaResumenCuerpo');
+            tbodyResumen.innerHTML = '';
+            let granTotalResumenAcumulado = 0;
+
+            Object.keys(mapaLotesEquivalentes).sort().forEach(numStr => {
+                const codigoRomano = mapaLotesEquivalentes[numStr];
+                const registrosDelLoteFiltrados = datosAMostrar.filter(d => d.idLote === codigoRomano);
+                
+                let propietarioText = "Sin Asignar";
+                if(registrosDelLoteFiltrados.length > 0) {
+                    propietarioText = registrosDelLoteFiltrados[0].propietario;
+                } else {
+                    const registroHistorico = baseDeDatosOriginal.find(d => d.idLote === codigoRomano);
+                    if(registroHistorico) propietarioText = registroHistorico.propietario;
+                }
+
+                let saldoAdeudadoLote = 0;
+                registrosDelLoteFiltrados.forEach(r => {
+                    if (r.estado !== 'PAGADO' && r.estado !== 'COBRADO') {
+                        saldoAdeudadoLote += (r.total > 0 ? r.total : (r.subtotal + r.recargo));
+                    }
+                });
+
+                granTotalResumenAcumulado += saldoAdeudadoLote;
+
+                const trResumen = document.createElement('tr');
+                trResumen.className = "hover:bg-slate-50 transition-colors";
+                trResumen.innerHTML = `
+                    <td class="p-4 font-bold text-slate-800">Lote ${numStr}</td>
+                    <td class="p-4 font-medium text-slate-900 uppercase text-xs tracking-tight">${propietarioText}</td>
+                    <td class="p-4 text-right font-bold ${saldoAdeudadoLote > 0 ? 'text-rose-600' : 'text-slate-400'}">${formatMoneda(saldoAdeudadoLote)}</td>
+                `;
+                tbodyResumen.appendChild(trResumen);
+            });
+
+            document.getElementById('totalResumenTotal').innerText = formatMoneda(granTotalResumenAcumulado);
+
+            // Dibujar Gauge de efectividad
+            if (chartGaugeInstance) chartGaugeInstance.destroy();
+            const ctxGauge = document.getElementById('chartGaugeMes').getContext('2d');
+            chartGaugeInstance = new Chart(ctxGauge, {
+                type: 'doughnut',
+                data: { 
+                    labels: ['Efectividad', 'Pendiente'], 
+                    datasets: [{ data: [parseFloat(porcentajeEfectividadMes), 100 - parseFloat(porcentajeEfectividadMes)], backgroundColor: ['#10b981', '#e2e8f0'], borderWidth: 0 }] 
+                },
+                options: { responsive: true, maintainAspectRatio: false, circumference: 180, rotation: 270, cutout: '75%', plugins: { legend: { display: false }, tooltip: { disabled: true } } }
+            });
+        }
+
+        function mostrarError(mensaje) {
+            document.getElementById('statusDot').className = "w-2.5 h-2.5 bg-rose-500 rounded-full animate-none";
+            document.getElementById('statusText').innerText = "Error Sincro";
+            document.getElementById('tablaCuerpo').innerHTML = `<tr><td colspan="8" class="p-8 text-center text-rose-500 font-medium">${mensaje}</td></tr>`;
+        }
+
+        window.onload = function() {
+            lucide.createIcons();
+            conectarYFetchData();
+        };
+    </script>
+</body>
+</html>
