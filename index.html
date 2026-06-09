@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel de Propietarios - BARRIO EUSKADI I</title>
+    <title>Dashboard Control de Expensas - BARRIO EUSKADI I - POCITO</title>
     <!-- Tailwind CSS para diseño moderno y responsive -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Chart.js para los gráficos interactivos -->
@@ -19,7 +19,7 @@
         /* Estilos de optimización absoluta para Impresión y Reportes PDF Selectivos */
         @media print {
             body { background-color: #ffffff; color: #000000; font-size: 11px; }
-            header, .no-print, #statusConnection, button, .mes-corriente-container, .tabs-selector-container { 
+            header, .no-print, #statusConnection, button, .section-graficos, .mes-corriente-container, #ficha-registros-listados, .tabs-selector-container, .resumen-actions-container { 
                 display: none !important; 
             }
             main { max-width: 100% !important; width: 100% !important; padding: 0 !important; margin: 0 !important; }
@@ -35,14 +35,14 @@
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased min-h-screen">
 
-    <!-- ENTORNO PRINCIPAL DEL DASHBOARD (ACCESO DIRECTO) -->
+    <!-- ENTORNO PRINCIPAL DEL DASHBOARD (ENTRADA DIRECTA COMO PROPIETARIO) -->
     <div id="entornoDashboard">
         <!-- Navbar / Encabezado -->
         <header class="bg-slate-950 text-white shadow-md sticky top-0 z-40">
             <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
                 <div>
                     <h1 class="text-xl font-bold tracking-tight uppercase">BARRIO EUSKADI I - POCITO</h1>
-                    <p class="text-xs text-slate-400">Panel de Consulta de Expensas para Propietarios</p>
+                    <p class="text-xs text-slate-400">Panel de Control Financiero y Gestión de Expensas en Tiempo Real</p>
                 </div>
                 <div class="flex flex-wrap items-center gap-2">
                     <button onclick="window.print()" class="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold px-4 py-2 rounded-lg border border-slate-700 transition shadow-sm cursor-pointer">
@@ -58,11 +58,63 @@
 
         <main class="max-w-7xl mx-auto px-4 py-6 space-y-6">
 
+            <!-- Selector Matricial de Fichas de Lotes (Mantenido para navegación fluida) -->
+            <section class="bg-white p-5 rounded-xl shadow-sm border border-slate-100 flex flex-col gap-4 no-print">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">Selección de Fichas por Lote</label>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-10 gap-2 text-center" id="contenedorLotesBotonera">
+                        <button id="btnLote-01" onclick="alternarSeleccionLote('01')" class="bg-white hover:bg-slate-100 text-slate-800 p-2 rounded-xl border border-slate-200 transition-all cursor-pointer flex flex-col items-center justify-center shadow-xs min-h-[65px]" disabled><span class="text-xs font-bold text-slate-400">Lote 01</span><span id="lblPropietario-01" class="text-[10px] font-semibold text-slate-700 truncate w-full mt-0.5 uppercase tracking-tight">...</span></button>
+                        <button id="btnLote-02" onclick="alternarSeleccionLote('02')" class="bg-white hover:bg-slate-100 text-slate-800 p-2 rounded-xl border border-slate-200 transition-all cursor-pointer flex flex-col items-center justify-center shadow-xs min-h-[65px]" disabled><span class="text-xs font-bold text-slate-400">Lote 02</span><span id="lblPropietario-02" class="text-[10px] font-semibold text-slate-700 truncate w-full mt-0.5 uppercase tracking-tight">...</span></button>
+                        <button id="btnLote-03" onclick="alternarSeleccionLote('03')" class="bg-white hover:bg-slate-100 text-slate-800 p-2 rounded-xl border border-slate-200 transition-all cursor-pointer flex flex-col items-center justify-center shadow-xs min-h-[65px]" disabled><span class="text-xs font-bold text-slate-400">Lote 03</span><span id="lblPropietario-03" class="text-[10px] font-semibold text-slate-700 truncate w-full mt-0.5 uppercase tracking-tight">...</span></button>
+                        <button id="btnLote-04" onclick="alternarSeleccionLote('04')" class="bg-white hover:bg-slate-100 text-slate-800 p-2 rounded-xl border border-slate-200 transition-all cursor-pointer flex flex-col items-center justify-center shadow-xs min-h-[65px]" disabled><span class="text-xs font-bold text-slate-400">Lote 04</span><span id="lblPropietario-04" class="text-[10px] font-semibold text-slate-700 truncate w-full mt-0.5 uppercase tracking-tight">...</span></button>
+                        <button id="btnLote-05" onclick="alternarSeleccionLote('05')" class="bg-white hover:bg-slate-100 text-slate-800 p-2 rounded-xl border border-slate-200 transition-all cursor-pointer flex flex-col items-center justify-center shadow-xs min-h-[65px]" disabled><span class="text-xs font-bold text-slate-400">Lote 05</span><span id="lblPropietario-05" class="text-[10px] font-semibold text-slate-700 truncate w-full mt-0.5 uppercase tracking-tight">...</span></button>
+                        <button id="btnLote-06" onclick="alternarSeleccionLote('06')" class="bg-white hover:bg-slate-100 text-slate-800 p-2 rounded-xl border border-slate-200 transition-all cursor-pointer flex flex-col items-center justify-center shadow-xs min-h-[65px]" disabled><span class="text-xs font-bold text-slate-400">Lote 06</span><span id="lblPropietario-06" class="text-[10px] font-semibold text-slate-700 truncate w-full mt-0.5 uppercase tracking-tight">...</span></button>
+                        <button id="btnLote-07" onclick="alternarSeleccionLote('07')" class="bg-white hover:bg-slate-100 text-slate-800 p-2 rounded-xl border border-slate-200 transition-all cursor-pointer flex flex-col items-center justify-center shadow-xs min-h-[65px]" disabled><span class="text-xs font-bold text-slate-400">Lote 07</span><span id="lblPropietario-07" class="text-[10px] font-semibold text-slate-700 truncate w-full mt-0.5 uppercase tracking-tight">...</span></button>
+                        <button id="btnLote-08" onclick="alternarSeleccionLote('08')" class="bg-white hover:bg-slate-100 text-slate-800 p-2 rounded-xl border border-slate-200 transition-all cursor-pointer flex flex-col items-center justify-center shadow-xs min-h-[65px]" disabled><span class="text-xs font-bold text-slate-400">Lote 08</span><span id="lblPropietario-08" class="text-[10px] font-semibold text-slate-700 truncate w-full mt-0.5 uppercase tracking-tight">...</span></button>
+                        <button id="btnLote-09" onclick="alternarSeleccionLote('09')" class="bg-white hover:bg-slate-100 text-slate-800 p-2 rounded-xl border border-slate-200 transition-all cursor-pointer flex flex-col items-center justify-center shadow-xs min-h-[65px]" disabled><span class="text-xs font-bold text-slate-400">Lote 09</span><span id="lblPropietario-09" class="text-[10px] font-semibold text-slate-700 truncate w-full mt-0.5 uppercase tracking-tight">...</span></button>
+                        <button id="btnLote-10" onclick="alternarSeleccionLote('10')" class="bg-white hover:bg-slate-100 text-slate-800 p-2 rounded-xl border border-slate-200 transition-all cursor-pointer flex flex-col items-center justify-center shadow-xs min-h-[65px]" disabled><span class="text-xs font-bold text-slate-400">Lote 10</span><span id="lblPropietario-10" class="text-[10px] font-semibold text-slate-700 truncate w-full mt-0.5 uppercase tracking-tight">...</span></button>
+                        
+                        <button id="btnLote-11" onclick="alternarSeleccionLote('11')" class="bg-white hover:bg-slate-100 text-slate-800 p-2 rounded-xl border border-slate-200 transition-all cursor-pointer flex flex-col items-center justify-center shadow-xs min-h-[65px]" disabled><span class="text-xs font-bold text-slate-400">Lote 11</span><span id="lblPropietario-11" class="text-[10px] font-semibold text-slate-700 truncate w-full mt-0.5 uppercase tracking-tight">...</span></button>
+                        <button id="btnLote-12" onclick="alternarSeleccionLote('12')" class="bg-white hover:bg-slate-100 text-slate-800 p-2 rounded-xl border border-slate-200 transition-all cursor-pointer flex flex-col items-center justify-center shadow-xs min-h-[65px]" disabled><span class="text-xs font-bold text-slate-400">Lote 12</span><span id="lblPropietario-12" class="text-[10px] font-semibold text-slate-700 truncate w-full mt-0.5 uppercase tracking-tight">...</span></button>
+                        <button id="btnLote-13" onclick="alternarSeleccionLote('13')" class="bg-white hover:bg-slate-100 text-slate-800 p-2 rounded-xl border border-slate-200 transition-all cursor-pointer flex flex-col items-center justify-center shadow-xs min-h-[65px]" disabled><span class="text-xs font-bold text-slate-400">Lote 13</span><span id="lblPropietario-13" class="text-[10px] font-semibold text-slate-700 truncate w-full mt-0.5 uppercase tracking-tight">...</span></button>
+                        <button id="btnLote-14" onclick="alternarSeleccionLote('14')" class="bg-white hover:bg-slate-100 text-slate-800 p-2 rounded-xl border border-slate-200 transition-all cursor-pointer flex flex-col items-center justify-center shadow-xs min-h-[65px]" disabled><span class="text-xs font-bold text-slate-400">Lote 14</span><span id="lblPropietario-14" class="text-[10px] font-semibold text-slate-700 truncate w-full mt-0.5 uppercase tracking-tight">...</span></button>
+                        <button id="btnLote-15" onclick="alternarSeleccionLote('15')" class="bg-white hover:bg-slate-100 text-slate-800 p-2 rounded-xl border border-slate-200 transition-all cursor-pointer flex flex-col items-center justify-center shadow-xs min-h-[65px]" disabled><span class="text-xs font-bold text-slate-400">Lote 15</span><span id="lblPropietario-15" class="text-[10px] font-semibold text-slate-700 truncate w-full mt-0.5 uppercase tracking-tight">...</span></button>
+                        <button id="btnLote-16" onclick="alternarSeleccionLote('16')" class="bg-white hover:bg-slate-100 text-slate-800 p-2 rounded-xl border border-slate-200 transition-all cursor-pointer flex flex-col items-center justify-center shadow-xs min-h-[65px]" disabled><span class="text-xs font-bold text-slate-400">Lote 16</span><span id="lblPropietario-16" class="text-[10px] font-semibold text-slate-700 truncate w-full mt-0.5 uppercase tracking-tight">...</span></button>
+                        <button id="btnLote-17" onclick="alternarSeleccionLote('17')" class="bg-white hover:bg-slate-100 text-slate-800 p-2 rounded-xl border border-slate-200 transition-all cursor-pointer flex flex-col items-center justify-center shadow-xs min-h-[65px]" disabled><span class="text-xs font-bold text-slate-400">Lote 17</span><span id="lblPropietario-17" class="text-[10px] font-semibold text-slate-700 truncate w-full mt-0.5 uppercase tracking-tight">...</span></button>
+                        <button id="btnLote-18" onclick="alternarSeleccionLote('18')" class="bg-white hover:bg-slate-100 text-slate-800 p-2 rounded-xl border border-slate-200 transition-all cursor-pointer flex flex-col items-center justify-center shadow-xs min-h-[65px]" disabled><span class="text-xs font-bold text-slate-400">Lote 18</span><span id="lblPropietario-18" class="text-[10px] font-semibold text-slate-700 truncate w-full mt-0.5 uppercase tracking-tight">...</span></button>
+                        <button id="btnLote-19" onclick="alternarSeleccionLote('19')" class="bg-white hover:bg-slate-100 text-slate-800 p-2 rounded-xl border border-slate-200 transition-all cursor-pointer flex flex-col items-center justify-center shadow-xs min-h-[65px]" disabled><span class="text-xs font-bold text-slate-400">Lote 19</span><span id="lblPropietario-19" class="text-[10px] font-semibold text-slate-700 truncate w-full mt-0.5 uppercase tracking-tight">...</span></button>
+                        <button id="btnLote-20" onclick="alternarSeleccionLote('20')" class="bg-white hover:bg-slate-100 text-slate-800 p-2 rounded-xl border border-slate-200 transition-all cursor-pointer flex flex-col items-center justify-center shadow-xs min-h-[65px]" disabled><span class="text-xs font-bold text-slate-400">Lote 20</span><span id="lblPropietario-20" class="text-[10px] font-semibold text-slate-700 truncate w-full mt-0.5 uppercase tracking-tight">...</span></button>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center text-xs pt-1">
+                    <button id="btnResetFilters" class="text-emerald-600 hover:text-emerald-700 font-semibold flex items-center gap-1 cursor-pointer" disabled>
+                        <i data-lucide="refresh-cw" class="w-3 h-3"></i> Restablecer Selección de Lotes
+                    </button>
+                </div>
+            </section>
+
+            <!-- Bloque de Métricas Globales (Vista Propietario: Esconde Recaudación Global y Registros Totales) -->
+            <div class="section-metrics">
+                <div class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 no-print">Métricas del Consorcio</div>
+                <section class="grid grid-cols-1 gap-4">
+                    <div id="kpiContainerDeuda" class="bg-white p-5 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between border-l-4 border-l-rose-500">
+                        <div class="space-y-1">
+                            <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Monto Total Pendiente Global</p>
+                            <h3 class="text-2xl font-black text-rose-600" id="kpiDeuda">$0,00</h3>
+                        </div>
+                        <div class="p-3 bg-rose-50 rounded-lg no-print">
+                            <i data-lucide="alert-triangle" class="w-6 h-6 text-rose-500"></i>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
             <!-- Gestión del Mes Corriente -->
             <div class="mes-corriente-container">
                 <div class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1">
                     <i data-lucide="calendar" class="w-3.5 h-3.5 text-slate-400"></i> 
-                    Consolidado del Mes Vigente: <span id="lblMesCorriente" class="text-slate-600 normal-case ml-1 font-semibold">-</span>
+                    Métricas Consolidadas del Mes Vigente: <span id="lblMesCorriente" class="text-slate-600 normal-case ml-1 font-semibold">-</span>
                 </div>
                 <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between border-l-4 border-l-emerald-500">
@@ -106,10 +158,10 @@
             <section class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden tabla-container">
                 <div class="bg-slate-100 p-2 border-b border-slate-200 flex gap-2 tabs-selector-container no-print">
                     <button id="btnTabBaseDatos" onclick="cambiarPestana('BASEDATOS')" class="bg-white text-slate-900 font-bold text-xs px-4 py-2 rounded-lg shadow-xs cursor-pointer flex items-center gap-1">
-                        <i data-lucide="database" class="w-3.5 h-3.5"></i> Vista Detallada
+                        <i data-lucide="database" class="w-3.5 h-3.5"></i> Vista Base de Datos
                     </button>
                     <button id="btnTabResumenSaldos" onclick="cambiarPestana('RESUMEN')" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold text-xs px-4 py-2 rounded-lg cursor-pointer flex items-center gap-1">
-                        <i data-lucide="file-text" class="w-3.5 h-3.5 text-emerald-600"></i> Resumen de Saldos por Lote
+                        <i data-lucide="file-text" class="w-3.5 h-3.5 text-emerald-600"></i> Resumen de Saldos Imprimible
                     </button>
                 </div>
 
@@ -119,6 +171,11 @@
                         <div>
                             <h3 class="font-bold text-base text-slate-900">Registros Detallados de la Base de Datos</h3>
                             <p class="text-xs text-slate-500 font-medium">Fecha de cálculo: <span class="lblFechaCalculoDinamica font-bold text-slate-900">-</span></p>
+                        </div>
+                        <div class="flex items-center gap-2 resumen-actions-container no-print">
+                            <button onclick="window.print()" class="flex items-center gap-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold px-3 py-2 rounded-lg transition shadow-sm cursor-pointer">
+                                <i data-lucide="printer" class="w-3.5 h-3.5 text-emerald-400"></i> Imprimir esta Tabla
+                            </button>
                         </div>
                     </div>
                     <div class="overflow-x-auto w-full">
@@ -156,6 +213,11 @@
                             <h3 class="font-bold text-base text-slate-900">Resumen Consolidado de Deuda por Lote</h3>
                             <p class="text-xs text-slate-500 font-medium">Fecha de cálculo: <span class="lblFechaCalculoDinamica font-bold text-slate-900">-</span></p>
                         </div>
+                        <div class="flex items-center gap-2 resumen-actions-container no-print">
+                            <button onclick="window.print()" class="flex items-center gap-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold px-3 py-2 rounded-lg transition shadow-sm cursor-pointer">
+                                <i data-lucide="printer" class="w-3.5 h-3.5 text-emerald-400"></i> Imprimir este Resumen
+                            </button>
+                        </div>
                     </div>
                     <div class="overflow-x-auto w-full">
                         <table class="w-full text-left border-collapse">
@@ -180,14 +242,20 @@
         </main>
     </div>
 
-    <!-- Lógica de Consulta Automatizada -->
+    <!-- Lógica de Operación y Sincronismo -->
     <script>
+        // VARIABLE GLOBAL DE BASE DE DATOS (FÁCIL EDICIÓN)
         const SHEETS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTeRTnTG2O69xGBaDShVvATBv8s9I6w0N2O0Zd1A7RPxMcM8I5w2kksmcMTtMO742WTbJjY28jsp28p/pub?gid=0&single=true&output=csv";
 
+        // Fijado en modo Propietario de forma permanente
+        const rolUsuarioActivo = "propietario";
+        
         let baseDeDatosOriginal = [];
         let periodoVigenteGlobal = "";
         let fechaYHoraCalculoGlobal = ""; 
+        
         let chartGaugeInstance = null;
+        let lotesSeleccionados = [];
         let pestanaActiva = "BASEDATOS";
 
         const mapaLotesEquivalentes = {
@@ -273,6 +341,17 @@
 
             document.getElementById('lblMesCorriente').innerText = periodoVigenteGlobal;
 
+            Object.keys(mapaLotesEquivalentes).forEach(numStr => {
+                const codigoRomano = mapaLotesEquivalentes[numStr];
+                const registroLote = baseDeDatosOriginal.find(d => d.idLote === codigoRomano);
+                const nombreCortoPropietario = registroLote ? registroLote.propietario.split('/')[0].trim() : 'Sin Asignar';
+                
+                const lbl = document.getElementById(`lblPropietario-${numStr}`);
+                if (lbl) lbl.innerText = nombreShortPropietario(nombreCortoPropietario);
+                const btn = document.getElementById(`btnLote-${numStr}`);
+                if (btn) btn.disabled = false;
+            });
+
             const ahora = new Date();
             fechaYHoraCalculoGlobal = ahora.toLocaleDateString('es-AR') + ' a las ' + ahora.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
             
@@ -283,9 +362,73 @@
 
             document.getElementById('statusDot').className = "w-2.5 h-2.5 bg-emerald-500 rounded-full";
             document.getElementById('statusText').innerText = "Sincronizado";
+            document.getElementById('btnResetFilters').disabled = false;
         }
 
-        function procesarDashboard(datosAMostrar) {
+        function nombreShortPropietario(completo) {
+            return completo.length > 12 ? completo.substring(0, 11) + '.' : completo;
+        }
+
+        function alternarSeleccionLote(numStr) {
+            const index = lotesSeleccionados.indexOf(numStr);
+            const btn = document.getElementById(`btnLote-${numStr}`);
+            
+            if (index > -1) {
+                lotesSeleccionados.splice(index, 1);
+                btn.className = "bg-white hover:bg-slate-100 text-slate-800 p-2 rounded-xl border border-slate-200 transition-all cursor-pointer flex flex-col items-center justify-center shadow-xs min-h-[65px]";
+                btn.querySelector('span:first-child').className = "text-xs font-bold text-slate-400";
+                btn.querySelector('span:last-child').className = "text-[10px] font-semibold text-slate-700 truncate w-full mt-0.5 uppercase tracking-tight";
+            } else {
+                lotesSeleccionados.push(numStr);
+                btn.className = "bg-emerald-600 hover:bg-emerald-700 text-white p-2 rounded-xl border border-emerald-700 transition-all cursor-pointer flex flex-col items-center justify-center shadow-md min-h-[65px]";
+                btn.querySelector('span:first-child').className = "text-xs font-bold text-emerald-100";
+                btn.querySelector('span:last-child').className = "text-[10px] font-bold text-white truncate w-full mt-0.5 uppercase tracking-tight";
+            }
+            aplicarFiltros();
+        }
+
+        function resetearFiltros() {
+            lotesSeleccionados.forEach(numStr => {
+                const btn = document.getElementById(`btnLote-${numStr}`);
+                if (btn) {
+                    btn.className = "bg-white hover:bg-slate-100 text-slate-800 p-2 rounded-xl border border-slate-200 transition-all cursor-pointer flex flex-col items-center justify-center shadow-xs min-h-[65px]";
+                    btn.querySelector('span:first-child').className = "text-xs font-bold text-slate-400";
+                    btn.querySelector('span:last-child').className = "text-[10px] font-semibold text-slate-700 truncate w-full mt-0.5 uppercase tracking-tight";
+                }
+            });
+            lotesSeleccionados = [];
+            procesarDashboard(baseDeDatosOriginal);
+        }
+
+        function aplicarFiltros() {
+            const codigosRomanosSeleccionados = lotesSeleccionados.map(num => mapaLotesEquivalentes[num]);
+
+            const datosFiltrados = baseDeDatosOriginal.filter(item => {
+                return (codigosRomanosSeleccionados.length === 0 || codigosRomanosSeleccionados.includes(item.idLote));
+            });
+
+            procesarDashboard(datosFiltrados);
+        }
+
+        function procesarDashboard(datosFiltrados) {
+            let datosAMostrar = datosFiltrados;
+            
+            if (lotesSeleccionados.length > 0) {
+                const codigosRomanosSeleccionados = lotesSeleccionados.map(num => mapaLotesEquivalentes[num]);
+                datosAMostrar = baseDeDatosOriginal.filter(item => codigosRomanosSeleccionados.includes(item.idLote));
+            }
+
+            let totalDeudaFiltrado = 0;
+
+            datosAMostrar.forEach(item => {
+                const finalTotal = item.total > 0 ? item.total : (item.subtotal + item.recargo);
+                if(item.estado !== 'PAGADO' && item.estado !== 'COBRADO') {
+                    totalDeudaFiltrado += finalTotal;
+                }
+            });
+
+            document.getElementById('kpiDeuda').innerText = formatMoneda(totalDeudaFiltrado);
+
             let cobrosMesCorriente = 0;
             let deudaMesCorriente = 0;
             let lotesEnMoraMesCorriente = new Set();
@@ -400,15 +543,12 @@
 
             document.getElementById('totalResumenTotal').innerText = formatMoneda(granTotalResumenAcumulado);
 
-            // Dibujar Gauge de efectividad
+            // Renderizado del Gauge de Efectividad (Único gráfico visible para Propietarios)
             if (chartGaugeInstance) chartGaugeInstance.destroy();
             const ctxGauge = document.getElementById('chartGaugeMes').getContext('2d');
             chartGaugeInstance = new Chart(ctxGauge, {
                 type: 'doughnut',
-                data: { 
-                    labels: ['Efectividad', 'Pendiente'], 
-                    datasets: [{ data: [parseFloat(porcentajeEfectividadMes), 100 - parseFloat(porcentajeEfectividadMes)], backgroundColor: ['#10b981', '#e2e8f0'], borderWidth: 0 }] 
-                },
+                data: { labels: ['Efectividad', 'Pendiente'], datasets: [{ data: [parseFloat(porcentajeEfectividadMes), 100 - parseFloat(porcentajeEfectividadMes)], backgroundColor: ['#10b981', '#e2e8f0'], borderWidth: 0 }] },
                 options: { responsive: true, maintainAspectRatio: false, circumference: 180, rotation: 270, cutout: '75%', plugins: { legend: { display: false }, tooltip: { disabled: true } } }
             });
         }
@@ -421,7 +561,9 @@
 
         window.onload = function() {
             lucide.createIcons();
+            // Conexión y descarga automática e inmediata de datos al cargar el archivo
             conectarYFetchData();
+            document.getElementById('btnResetFilters').addEventListener('click', resetearFiltros);
         };
     </script>
 </body>
