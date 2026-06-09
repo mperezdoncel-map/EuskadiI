@@ -61,7 +61,7 @@
             <!-- Selector Matricial de Fichas de Lotes (Mantenido para navegación fluida) -->
             <section class="bg-white p-5 rounded-xl shadow-sm border border-slate-100 flex flex-col gap-4 no-print">
                 <div>
-                    <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">Selección de Fichas por Lote</label>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">Selección de Fichas por Lote (Seleccione su o sus lotes, si no lo hace se exponen los valores totales del Barrio)</label>
                     <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-10 gap-2 text-center" id="contenedorLotesBotonera">
                         <button id="btnLote-01" onclick="alternarSeleccionLote('01')" class="bg-white hover:bg-slate-100 text-slate-800 p-2 rounded-xl border border-slate-200 transition-all cursor-pointer flex flex-col items-center justify-center shadow-xs min-h-[65px]" disabled><span class="text-xs font-bold text-slate-400">Lote 01</span><span id="lblPropietario-01" class="text-[10px] font-semibold text-slate-700 truncate w-full mt-0.5 uppercase tracking-tight">...</span></button>
                         <button id="btnLote-02" onclick="alternarSeleccionLote('02')" class="bg-white hover:bg-slate-100 text-slate-800 p-2 rounded-xl border border-slate-200 transition-all cursor-pointer flex flex-col items-center justify-center shadow-xs min-h-[65px]" disabled><span class="text-xs font-bold text-slate-400">Lote 02</span><span id="lblPropietario-02" class="text-[10px] font-semibold text-slate-700 truncate w-full mt-0.5 uppercase tracking-tight">...</span></button>
@@ -100,7 +100,7 @@
                 <section class="grid grid-cols-1 gap-4">
                     <div id="kpiContainerDeuda" class="bg-white p-5 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between border-l-4 border-l-rose-500">
                         <div class="space-y-1">
-                            <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Monto Total Pendiente Global</p>
+                            <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Monto de Expensas Adeudadas</p>
                             <h3 class="text-2xl font-black text-rose-600" id="kpiDeuda">$0,00</h3>
                         </div>
                         <div class="p-3 bg-rose-50 rounded-lg no-print">
